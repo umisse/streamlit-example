@@ -26,48 +26,49 @@ if uploaded_files:
     st.session_state['files'] = {file.name: file.getvalue().decode() for file in uploaded_files}
     st.session_state['file_index'] = 0  # reset file index when new files are uploaded
 
-    # Navigation buttons
-    st.markdown('---')
-    if st.button('Previous File'):
-        st.session_state['file_index'] = max(0, st.session_state['file_index'] - 1)
-    if st.button('Next File'):
-        st.session_state['file_index'] = min(len(st.session_state['files']) - 1, st.session_state['file_index'] + 1)
+# Navigation buttons
+st.markdown('---')
+if st.button('Previous File'):
+    st.session_state['file_index'] = (st.session_state['file_index'] - 1) % len(st.session_state['files'])
+if st.button('Next File'):
+    st.session_state['file_index'] = (st.session_state['file_index'] + 1) % len(st.session_state['files'])
 
-    # Get the current file name and content
-    current_file_name = list(st.session_state['files'].keys())[st.session_state['file_index']]
-    try:
-        content = st.session_state['files'][current_file_name]
-        metadata, markdown_content = separate_metadata_content(content)
+# Get the current file name and content
+current_file_name = list(st.session_state['files'].keys())[st.session_state['file_index']]
+try:
+    content = st.session_state['files'][current_file_name]
+    metadata, markdown_content = separate_metadata_content(content)
 
-        # Display the metadata
-        st.text_area('Metadata:', metadata, height=len(metadata.split('\n')) * 18)
+    # Display the metadata
+    st.text_area('Metadata:', metadata, height=len(metadata.split('\n')) * 18)
 
-        # Display a Markdown input box and an HTML output panel
-        markdown_content = st.text_area('Markdown Content:', markdown_content, height=len(markdown_content.split('\n')) * 18)
-        html_content = markdown(markdown_content)
-        st.sidebar.markdown('HTML Preview:')
-        st.sidebar.markdown(html_content, unsafe_allow_html=True)
+    # Display a Markdown input box and an HTML output panel
+    markdown_content = st.text_area('Markdown Content:', markdown_content, height=len(markdown_content.split('\n')) * 18)
+    html_content = markdown(markdown_content)
+    st.sidebar.markdown('HTML Preview:')
+    st.sidebar.markdown(html_content, unsafe_allow_html=True)
 
-        # User clicks save button to store the changes
-        if st.button('Save Changes'):
-            st.session_state['files'][current_file_name] = metadata + '\n' + markdown_content
+    # User clicks save button to store the changes
+    if st.button('Save Changes'):
+        st.session_state['files'][current_file_name] = metadata + '\n' + markdown_content
 
-        # User clicks download button to download all changes as a zip file
-        if st.button('Download All'):
-            # Create a zip file in memory
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zf:
-                for file_name, file_content in st.session_state['files'].items():
-                    zf.writestr(file_name, file_content)
-            zip_buffer.seek(0)
+    # User clicks download button to download all changes as a zip file
+    if st.button('Download All'):
+        # Create a zip file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zf:
+            for file_name, file_content in st.session_state['files'].items():
+                zf.writestr(file_name, file_content)
+        zip_buffer.seek(0)
 
-            # Generate download link for the zip file
-            b64 = base64.b64encode(zip_buffer.getvalue()).decode()
-            linko = f'<a href="data:application/zip;base64,{b64}" download="modified_files.zip">Download all modified files</a>'
-            st.markdown(linko, unsafe_allow_html=True)
+        # Generate download link for the zip file
+        b64 = base64.b64encode(zip_buffer.getvalue()).decode()
+        linko = f'<a href="data:application/zip;base64,{b64}" download="modified_files.zip">Download all modified files</a>'
+        st.markdown(linko, unsafe_allow_html=True)
 
-    except Exception as e:
-        st.error(f"Error: {e}")
+except Exception as e:
+    st.error(f"Error: {e}")
 
 # Your information
 st.markdown('---')
+st.markdown('Made by **Mohamed** with love from ChatG')
