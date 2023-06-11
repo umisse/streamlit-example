@@ -57,6 +57,3 @@ if uploaded_files:
         b64 = base64.b64encode(zip_buffer.getvalue()).decode()
         linko = f'<a href="data:application/zip;base64,{b64}" download="modified_files.zip">Download all modified files</a>'
         st.markdown(linko, unsafe_allow_html=True)
-
-    except Exception as e:
-        st.error(f"Error: {e}")
