@@ -1,31 +1,19 @@
 import streamlit as st
 from markdown import markdown
-import base64
-import io
-import zipfile
-import re
 
 # Function to separate metadata and content
 def separate_metadata_content(content):
     lines = content.split('\n')
     metadata_lines = [line for line in lines if line.startswith('@ ')]
     content_lines = [line for line in lines if not line.startswith('@ ')]
-    return '\n'.join(metadata_lines), re.sub('\n+', '\n', '\n'.join(content_lines).strip())
+    return '\n'.join(metadata_lines), '\n'.join(content_lines).strip()
 
-# Get session state
-if 'modified_files' not in st.session_state:
-    st.session_state['modified_files'] = {}
+# User uploads a single file
+uploaded_file = st.file_uploader("Upload .txt file:", type="txt")
 
-# User uploads multiple files
-uploaded_files = st.file_uploader("Upload .txt files:", type="txt", accept_multiple_files=True)
-
-if uploaded_files:
-    # Use a number input to choose the current file index
-    current_file_index = st.number_input('Select file index:', min_value=0, max_value=len(uploaded_files) - 1, step=1)
-
-    # Get the current file content
-    current_file = uploaded_files[current_file_index]
-    content = current_file.getvalue().decode()
+if uploaded_file:
+    # Read the uploaded file content
+    content = uploaded_file.getvalue().decode()
     metadata, markdown_content = separate_metadata_content(content)
 
     # Display the metadata
@@ -36,22 +24,3 @@ if uploaded_files:
     html_content = markdown(markdown_content)
     st.sidebar.markdown('HTML Preview:')
     st.sidebar.markdown(html_content, unsafe_allow_html=True)
-
-    # User clicks save button to store the changes
-    if st.button('Save Changes'):
-        # Store the modified content in the session state dictionary
-        st.session_state['modified_files'][current_file.name] = metadata + '\n' + markdown_content
-
-    # User clicks download button to download all changes as a zip file
-    if st.button('Download All'):
-        # Create a zip file in memory
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zf:
-            for file_name, file_content in st.session_state['modified_files'].items():
-                zf.writestr(file_name, file_content)
-        zip_buffer.seek(0)
-
-        # Generate download link for the zip file
-        b64 = base64.b64encode(zip_buffer.getvalue()).decode()
-        linko = f'<a href="data:application/zip;base64,{b64}" download="modified_files.zip">Download all modified files</a>'
-        st.markdown(linko, unsafe_allow_html=True)
