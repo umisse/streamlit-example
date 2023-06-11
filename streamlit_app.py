@@ -24,7 +24,7 @@ if uploaded_files:
     st.session_state['files'] = {file.name: file.getvalue().decode() for file in uploaded_files}
 
     # Use a select box to choose the current file
-    current_file_name = st.selectbox('Select file:', options=list(st.session_state['files'].keys()))
+    current_file_index = st.number_input('Select file index:', min_value=0, max_value=len(uploaded_files) - 1, step=1)
 
     # Get the current file content
     try:
