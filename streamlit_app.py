@@ -1,32 +1,27 @@
-import os
 import streamlit as st
 from markdown import markdown
 
-# Let user select directory
-directory = st.text_input('Enter directory path:')
+# User uploads a file
+uploaded_file = st.file_uploader("Upload .txt file:", type="txt")
 
-# Fetch .txt files from the directory
-files = [f for f in os.listdir(directory) if f.endswith('.txt')]
-file_index = st.slider('Choose a file:', 0, len(files) - 1, 0)
-current_file = files[file_index]
+if uploaded_file is not None:
+    # Read the file
+    try:
+        content = uploaded_file.read().decode()
 
-# Display next and previous buttons
-if st.button('Previous File'):
-    file_index = max(0, file_index - 1)
-if st.button('Next File'):
-    file_index = min(len(files) - 1, file_index + 1)
+        # Display a Markdown input box and an HTML output panel
+        markdown_content = st.text_area('Markdown:', content)
+        html_content = markdown(markdown_content)
+        st.sidebar.markdown('HTML:')
+        st.sidebar.code(html_content, language='html')
 
-# Load the selected file
-with open(os.path.join(directory, current_file), 'r') as file:
-    content = file.read()
+        # User clicks save button to write the content back to the file
+        if st.button('Save Changes'):
+            # Since we don't have access to the local filesystem, we can't overwrite the original file.
+            # Instead, we generate a link that the user can click to download the modified file.
+            b64 = base64.b64encode(markdown_content.encode()).decode()  # some strings
+            linko= f'<a href="data:file/txt;base64,{b64}" download="modified.txt">Download modified file</a>'
+            st.markdown(linko, unsafe_allow_html=True)
 
-# Display a Markdown input box and an HTML output panel
-markdown_content = st.text_area('Markdown:', content)
-html_content = markdown(markdown_content)
-st.sidebar.markdown('HTML:')
-st.sidebar.code(html_content, language='html')
-
-# Write the content back to the file
-if st.button('Save Changes'):
-    with open(os.path.join(directory, current_file), 'w') as file:
-        file.write(markdown_content)
+    except Exception as e:
+        st.error(f"Error: {e}")
