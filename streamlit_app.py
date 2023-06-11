@@ -12,9 +12,11 @@ def separate_metadata_content(content):
     content_lines = [line for line in lines if not line.startswith('@ ')]
     return '\n'.join(metadata_lines), re.sub('\n+', '\n', '\n'.join(content_lines).strip())
 
-# Get session state
+# Initialize session state
 if 'files' not in st.session_state:
     st.session_state['files'] = {}
+if 'file_index' not in st.session_state:
+    st.session_state['file_index'] = 0
 
 # User uploads multiple files
 uploaded_files = st.file_uploader("Upload .txt files:", type="txt", accept_multiple_files=True)
@@ -22,11 +24,17 @@ uploaded_files = st.file_uploader("Upload .txt files:", type="txt", accept_multi
 if uploaded_files:
     # Update session state
     st.session_state['files'] = {file.name: file.getvalue().decode() for file in uploaded_files}
+    st.session_state['file_index'] = 0  # reset file index when new files are uploaded
 
-    # Use a select box to choose the current file
-    current_file_name = st.selectbox('Select file:', options=list(st.session_state['files'].keys()))
+    # Navigation buttons
+    st.markdown('---')
+    if st.button('Previous File'):
+        st.session_state['file_index'] = max(0, st.session_state['file_index'] - 1)
+    if st.button('Next File'):
+        st.session_state['file_index'] = min(len(st.session_state['files']) - 1, st.session_state['file_index'] + 1)
 
-    # Get the current file content
+    # Get the current file name and content
+    current_file_name = list(st.session_state['files'].keys())[st.session_state['file_index']]
     try:
         content = st.session_state['files'][current_file_name]
         metadata, markdown_content = separate_metadata_content(content)
@@ -60,3 +68,6 @@ if uploaded_files:
 
     except Exception as e:
         st.error(f"Error: {e}")
+
+# Your information
+st.markdown('---')
