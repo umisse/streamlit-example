@@ -13,22 +13,19 @@ def separate_metadata_content(content):
     return '\n'.join(metadata_lines), re.sub('\n+', '\n', '\n'.join(content_lines).strip())
 
 # Get session state
-if 'files' not in st.session_state:
-    st.session_state['files'] = {}
+if 'modified_files' not in st.session_state:
+    st.session_state['modified_files'] = {}
 
 # User uploads multiple files
 uploaded_files = st.file_uploader("Upload .txt files:", type="txt", accept_multiple_files=True)
 
 if uploaded_files:
-    # Update session state
-    st.session_state['files'] = {file.name: file.getvalue().decode() for file in uploaded_files}
-
     # Use a number input to choose the current file index
     current_file_index = st.number_input('Select file index:', min_value=0, max_value=len(uploaded_files) - 1, step=1)
 
-    # Get the current file name and content
-    current_file_name = list(st.session_state['files'].keys())[current_file_index]
-    content = st.session_state['files'][current_file_name]
+    # Get the current file content
+    current_file = uploaded_files[current_file_index]
+    content = current_file.getvalue().decode()
     metadata, markdown_content = separate_metadata_content(content)
 
     # Display the metadata
@@ -42,14 +39,15 @@ if uploaded_files:
 
     # User clicks save button to store the changes
     if st.button('Save Changes'):
-        st.session_state['files'][current_file_name] = metadata + '\n' + markdown_content
+        # Store the modified content in the session state dictionary
+        st.session_state['modified_files'][current_file.name] = metadata + '\n' + markdown_content
 
     # User clicks download button to download all changes as a zip file
     if st.button('Download All'):
         # Create a zip file in memory
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zf:
-            for file_name, file_content in st.session_state['files'].items():
+            for file_name, file_content in st.session_state['modified_files'].items():
                 zf.writestr(file_name, file_content)
         zip_buffer.seek(0)
 
