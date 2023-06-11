@@ -23,40 +23,40 @@ if uploaded_files:
     # Update session state
     st.session_state['files'] = {file.name: file.getvalue().decode() for file in uploaded_files}
 
-    # Use a select box to choose the current file
+    # Use a number input to choose the current file index
     current_file_index = st.number_input('Select file index:', min_value=0, max_value=len(uploaded_files) - 1, step=1)
 
-    # Get the current file content
-    try:
-        content = st.session_state['files'][current_file_name]
-        metadata, markdown_content = separate_metadata_content(content)
+    # Get the current file name and content
+    current_file_name = list(st.session_state['files'].keys())[current_file_index]
+    content = st.session_state['files'][current_file_name]
+    metadata, markdown_content = separate_metadata_content(content)
 
-        # Display the metadata
-        st.text_area('Metadata:', metadata, height=len(metadata.split('\n')) * 18)
+    # Display the metadata
+    st.text_area('Metadata:', metadata, height=len(metadata.split('\n')) * 18)
 
-        # Display a Markdown input box and an HTML output panel
-        markdown_content = st.text_area('Markdown Content:', markdown_content, height=len(markdown_content.split('\n')) * 18)
-        html_content = markdown(markdown_content)
-        st.sidebar.markdown('HTML Preview:')
-        st.sidebar.markdown(html_content, unsafe_allow_html=True)
+    # Display a Markdown input box and an HTML output panel
+    markdown_content = st.text_area('Markdown Content:', markdown_content, height=len(markdown_content.split('\n')) * 18)
+    html_content = markdown(markdown_content)
+    st.sidebar.markdown('HTML Preview:')
+    st.sidebar.markdown(html_content, unsafe_allow_html=True)
 
-        # User clicks save button to store the changes
-        if st.button('Save Changes'):
-            st.session_state['files'][current_file_name] = metadata + '\n' + markdown_content
+    # User clicks save button to store the changes
+    if st.button('Save Changes'):
+        st.session_state['files'][current_file_name] = metadata + '\n' + markdown_content
 
-        # User clicks download button to download all changes as a zip file
-        if st.button('Download All'):
-            # Create a zip file in memory
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zf:
-                for file_name, file_content in st.session_state['files'].items():
-                    zf.writestr(file_name, file_content)
-            zip_buffer.seek(0)
+    # User clicks download button to download all changes as a zip file
+    if st.button('Download All'):
+        # Create a zip file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zf:
+            for file_name, file_content in st.session_state['files'].items():
+                zf.writestr(file_name, file_content)
+        zip_buffer.seek(0)
 
-            # Generate download link for the zip file
-            b64 = base64.b64encode(zip_buffer.getvalue()).decode()
-            linko = f'<a href="data:application/zip;base64,{b64}" download="modified_files.zip">Download all modified files</a>'
-            st.markdown(linko, unsafe_allow_html=True)
+        # Generate download link for the zip file
+        b64 = base64.b64encode(zip_buffer.getvalue()).decode()
+        linko = f'<a href="data:application/zip;base64,{b64}" download="modified_files.zip">Download all modified files</a>'
+        st.markdown(linko, unsafe_allow_html=True)
 
     except Exception as e:
         st.error(f"Error: {e}")
